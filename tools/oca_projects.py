@@ -29,6 +29,7 @@ OCA_PROJECTS = {
     #              ],
     'banking': ['banking',
                 'bank-statement-reconcile',
+                'bank-statement-import',
                 'account-payment',
                 ],
     'community': ['maintainers-tools',
