@@ -88,18 +88,20 @@ def make_weblate_badge(repo_name, branch, addon_name):
     )
 
 
-def make_repo_badge(repo_name, branch, addon_name):
+def make_repo_badge(organization, repo_name, branch, addon_name):
     badge_repo_name = repo_name.replace('-', '--')
     return (
-        'https://img.shields.io/badge/github-OCA%2F{badge_repo_name}'
+        'https://img.shields.io/badge/'
+        'github-{organization}%2F{badge_repo_name}'
         '-lightgray.png?logo=github'.format(**locals()),
-        'https://github.com/OCA/{repo_name}/tree/'
+        'https://github.com/{organization}/{repo_name}/tree/'
         '{branch}/{addon_name}'.format(**locals()),
-        'OCA/{repo_name}'.format(**locals()),
+        '{organization}/{repo_name}'.format(**locals()),
     )
 
 
-def gen_one_addon_readme(repo_name, branch, addon_name, addon_dir, manifest):
+def gen_one_addon_readme(organization, repo_name, branch, 
+                         addon_name, addon_dir, manifest):
     fragments = {}
     for fragment_name in FRAGMENTS:
         fragment_filename = os.path.join(
@@ -116,7 +118,7 @@ def gen_one_addon_readme(repo_name, branch, addon_name, addon_dir, manifest):
     license = manifest.get('license')
     if license in LICENSE_BADGES:
         badges.append(LICENSE_BADGES[license])
-    badges.append(make_repo_badge(repo_name, branch, addon_name))
+    badges.append(make_repo_badge(organization, repo_name, branch, addon_name))
     badges.append(make_weblate_badge(repo_name, branch, addon_name))
     badges.append(make_runbot_badge(runbot_id, branch))
     authors = [
@@ -143,6 +145,7 @@ def gen_one_addon_readme(repo_name, branch, addon_name, addon_dir, manifest):
             branch=branch,
             fragments=fragments,
             manifest=manifest,
+            organization=organization,
             repo_name=repo_name,
             runbot_id=runbot_id,
         ))
@@ -159,7 +162,10 @@ def gen_one_addon_readme(repo_name, branch, addon_name, addon_dir, manifest):
 
 @click.command()
 @click.option('--repo-name', required=True,
-              help="OCA repository name, eg server-tools.")
+              help="GitHub repository name, eg server-tools.")
+@click.option('--organization', required=False,
+              default='OCA', show_default=True,
+              help="GitHub organization")
 @click.option('--branch', required=True,
               help="Odoo series. eg 11.0.")
 @click.option('--addon-dir', 'addon_dirs',
@@ -173,7 +179,8 @@ def gen_one_addon_readme(repo_name, branch, addon_name, addon_dir, manifest):
                    "generated for all installable addons found there.")
 @click.option('--commit/--no-commit',
               help="git commit changes to README.rst, if any.")
-def gen_addon_readme(repo_name, branch, addon_dirs, addons_dir, commit):
+def gen_addon_readme(organization, repo_name, branch,
+                     addon_dirs, addons_dir, commit):
     """ Generate README.rst from fragments.
 
     Do nothing if readme/DESCRIPTION.rst is absent, otherwise overwrite
@@ -197,7 +204,7 @@ def gen_addon_readme(repo_name, branch, addon_dirs, addons_dir, commit):
                 os.path.join(addon_dir, FRAGMENTS_DIR, 'DESCRIPTION.rst')):
             continue
         readme_filename = gen_one_addon_readme(
-            repo_name, branch, addon_name, addon_dir, manifest)
+            organization, repo_name, branch, addon_name, addon_dir, manifest)
         readme_filenames.append(readme_filename)
     if commit:
         commit_if_needed(readme_filenames, '[UPD] README.rst')
