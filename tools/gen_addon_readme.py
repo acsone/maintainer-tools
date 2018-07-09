@@ -100,7 +100,7 @@ def make_repo_badge(organization, repo_name, branch, addon_name):
     )
 
 
-def gen_one_addon_readme(organization, repo_name, branch, 
+def gen_one_addon_readme(organization, repo_name, branch,
                          addon_name, addon_dir, manifest):
     fragments = {}
     for fragment_name in FRAGMENTS:
