@@ -10,6 +10,35 @@ from .manifest import get_manifest_path, parse_manifest
 WEBSITE_KEY_RE = re.compile(r"""(["']website["']\s*:\s*["'])([^"']*)(["'])""")
 
 
+def _replace_website(addon_dir, manifest_path, url):
+    with open(manifest_path) as manifest_file:
+        manifest_str = manifest_file.read()
+    new_manifest_str, n = WEBSITE_KEY_RE.subn(r"\g<1>" + url + r"\g<3>", manifest_str)
+    if n == 0:
+        raise click.ClickException(
+            "no website key match in manifest in {}.".format(addon_dir)
+        )
+    if n > 1:
+        raise click.ClickException(
+            "more than one website key match in manifest in {}.".format(addon_dir)
+        )
+    if new_manifest_str != manifest_str:
+        with open(manifest_path, "w") as manifest_file:
+            manifest_file.write(new_manifest_str)
+
+
+def _add_website(addon_dir, manifest_path, url):
+    with open(manifest_path) as manifest_file:
+        manifest_str = manifest_file.read()
+    if not manifest_str.endswith(",\n}\n"):
+        raise click.ClickException(
+            "could not add manifest key in manifest in {}".format(addon_dir)
+        )
+    new_manifest_str = manifest_str[:-2] + f'    "website": "{url}",\n}}\n'
+    with open(manifest_path, "w") as manifest_file:
+        manifest_file.write(new_manifest_str)
+
+
 @click.command()
 @click.argument("url")
 @click.option("--addons-dir", default=".")
@@ -26,22 +55,6 @@ def main(url, addons_dir):
                 "Error parsing manifest {}.".format(manifest_path)
             )
         if "website" not in manifest:
-            raise click.ClickException(
-                "website key not found in manifest in {}.".format(addon_dir)
-            )
-        with open(manifest_path) as manifest_file:
-            manifest_str = manifest_file.read()
-        new_manifest_str, n = WEBSITE_KEY_RE.subn(
-            r"\g<1>" + url + r"\g<3>", manifest_str
-        )
-        if n == 0:
-            raise click.ClickException(
-                "no website key match in manifest in {}.".format(addon_dir)
-            )
-        if n > 1:
-            raise click.ClickException(
-                "more than one website key match in manifest in {}.".format(addon_dir)
-            )
-        if new_manifest_str != manifest_str:
-            with open(manifest_path, "w") as manifest_file:
-                manifest_file.write(new_manifest_str)
+            _add_website(addon_dir, manifest_path, url)
+        else:
+            _replace_website(addon_dir, manifest_path, url)

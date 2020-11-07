@@ -22,3 +22,17 @@ def test_fix_manifest_website(tmp_path):
     assert (
         tmp_path / "a2" / "__manifest__.py"
     ).read_text() == """{'name': 'a2', "website"   :\n "https://new.url"}"""
+
+
+def test_add_manifest_website(tmp_path):
+    (tmp_path / "a1").mkdir()
+    (tmp_path / "a1" / "__manifest__.py").write_text(
+        """{\n    'name': 'a1',\n}\n"""
+    )
+    result = CliRunner().invoke(
+        main, ["--addons-dir", str(tmp_path), "https://new.url"]
+    )
+    assert result.exit_code == 0
+    assert (
+        tmp_path / "a1" / "__manifest__.py"
+    ).read_text() == """{\n    'name': 'a1',\n    "website": "https://new.url",\n}\n"""
